@@ -529,9 +529,9 @@ module VX_bank #(
         end
         if (creq_fire) begin
             if (creq_rw)
-                dpi_trace("%d: cache%0d:%0d core-wr-req: addr=%0h, tag=%0h, pmask=%b, tid=%0d, byteen=%b, data=%0h, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(creq_addr, BANK_ID), creq_tag, creq_pmask, creq_tid, creq_byteen, creq_data, debug_wid_sel, debug_pc_sel);
+                dpi_trace("ASSIGNMENT 6WR%d: cache%0d:%0d core-wr-req: addr=%0h, tag=%0h, core_tag_width=%0d, pmask=%b, tid=%0d, byteen=%b, data=%0h, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(creq_addr, BANK_ID), creq_tag, CORE_TAG_WIDTH, creq_pmask, creq_tid, creq_byteen, creq_data, debug_wid_sel, debug_pc_sel);
             else
-                dpi_trace("%d: cache%0d:%0d core-rd-req: addr=%0h, tag=%0h, pmask=%b, tid=%0d, byteen=%b, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(creq_addr, BANK_ID), creq_tag, creq_pmask, creq_tid, creq_byteen, debug_wid_sel, debug_pc_sel);
+                dpi_trace("ASSIGNMENT 6RD: %d: cache%0d:%0d core-rd-req: addr=%0h, tag=%0h, core_tag_width=%0d, pmask=%b, tid=%0d, byteen=%b, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(creq_addr, BANK_ID), creq_tag, CORE_TAG_WIDTH, creq_pmask, creq_tid, creq_byteen, debug_wid_sel, debug_pc_sel);
         end
         if (crsq_fire) begin
             dpi_trace("%d: cache%0d:%0d core-rsp: addr=%0h, tag=%0h, pmask=%b, tid=%0d, data=%0h, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(addr_st1, BANK_ID), crsq_tag, crsq_pmask, crsq_tid, crsq_data, debug_wid_st1, debug_pc_st1);

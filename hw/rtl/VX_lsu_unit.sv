@@ -229,10 +229,11 @@ module VX_lsu_unit #(
         assign dcache_req_if.byteen[i] = mem_req_byteen;
         assign dcache_req_if.data[i]   = mem_req_data;
 
+    // Assignment 6
     `ifdef DBG_CACHE_REQ_INFO
-        assign dcache_req_if.tag[i] = {req_wid, req_pc, req_tag, req_addr_type[i]};
+        assign dcache_req_if.tag[i] = {req_is_prefetch, req_wid, req_pc, req_tag, req_addr_type[i]};
     `else
-        assign dcache_req_if.tag[i] = {req_tag, req_addr_type[i]};
+        assign dcache_req_if.tag[i] = {req_is_prefetch, req_tag, req_addr_type[i]};
     `endif
     end
     
