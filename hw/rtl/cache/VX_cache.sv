@@ -103,6 +103,8 @@ module VX_cache #(
     wire [NUM_BANKS-1:0] perf_write_miss_per_bank;
     wire [NUM_BANKS-1:0] perf_mshr_stall_per_bank;
     wire [NUM_BANKS-1:0] perf_pipe_stall_per_bank;
+    // Assignment 6
+    wire [NUM_BANKS-1:0] perf_prefetch_requests_per_bank;
 `endif
 
     ///////////////////////////////////////////////////////////////////////////
@@ -594,6 +596,8 @@ module VX_cache #(
             .perf_write_misses  (perf_write_miss_per_bank[i]),
             .perf_mshr_stalls   (perf_mshr_stall_per_bank[i]),
             .perf_pipe_stalls   (perf_pipe_stall_per_bank[i]),
+            // Assignment 6
+            .perf_prefetch_requests (perf_prefetch_requests_per_bank[i]),
         `endif
                        
             // Core request
@@ -718,11 +722,15 @@ module VX_cache #(
     wire [$clog2(NUM_BANKS+1)-1:0] perf_write_miss_per_cycle;
     wire [$clog2(NUM_BANKS+1)-1:0] perf_mshr_stall_per_cycle;
     wire [$clog2(NUM_BANKS+1)-1:0] perf_pipe_stall_per_cycle; 
+    // Assignment 6
+    wire [$clog2(NUM_BANKS+1)-1:0] perf_prefetch_requests_per_cycle; 
     
     `POP_COUNT(perf_read_miss_per_cycle, perf_read_miss_per_bank);
     `POP_COUNT(perf_write_miss_per_cycle, perf_write_miss_per_bank);    
     `POP_COUNT(perf_mshr_stall_per_cycle, perf_mshr_stall_per_bank);
     `POP_COUNT(perf_pipe_stall_per_cycle, perf_pipe_stall_per_bank);
+    // Assignment 6
+    `POP_COUNT(perf_prefetch_requests_per_cycle, perf_prefetch_requests_per_bank);
 
     reg [`PERF_CTR_BITS-1:0] perf_core_reads;
     reg [`PERF_CTR_BITS-1:0] perf_core_writes;
@@ -731,6 +739,8 @@ module VX_cache #(
     reg [`PERF_CTR_BITS-1:0] perf_mshr_stalls;
     reg [`PERF_CTR_BITS-1:0] perf_pipe_stalls;
     reg [`PERF_CTR_BITS-1:0] perf_crsp_stalls;
+    // Assignment 6
+    reg [`PERF_CTR_BITS-1:0] perf_prefetch_requests;
 
     always @(posedge clk) begin
         if (reset) begin
@@ -741,6 +751,8 @@ module VX_cache #(
             perf_mshr_stalls  <= 0;
             perf_pipe_stalls  <= 0;
             perf_crsp_stalls  <= 0;
+            // Assignment 6
+            perf_prefetch_requests <= 0;
         end else begin
             perf_core_reads   <= perf_core_reads  + `PERF_CTR_BITS'(perf_core_reads_per_cycle);
             perf_core_writes  <= perf_core_writes + `PERF_CTR_BITS'(perf_core_writes_per_cycle);
@@ -749,6 +761,8 @@ module VX_cache #(
             perf_mshr_stalls  <= perf_mshr_stalls + `PERF_CTR_BITS'(perf_mshr_stall_per_cycle);
             perf_pipe_stalls  <= perf_pipe_stalls + `PERF_CTR_BITS'(perf_pipe_stall_per_cycle);
             perf_crsp_stalls  <= perf_crsp_stalls + `PERF_CTR_BITS'(perf_crsp_stall_per_cycle);
+            // Assignment 6
+            perf_prefetch_requests <= perf_prefetch_requests + `PERF_CTR_BITS'(perf_prefetch_requests_per_cycle);
         end
     end
 
@@ -759,6 +773,8 @@ module VX_cache #(
     assign perf_cache_if.mshr_stalls  = perf_mshr_stalls;
     assign perf_cache_if.pipe_stalls  = perf_pipe_stalls;
     assign perf_cache_if.crsp_stalls  = perf_crsp_stalls;
+    // Assignment 6
+    assign perf_cache_if.prefetch_requests = perf_prefetch_requests;
 `endif
 
 endmodule

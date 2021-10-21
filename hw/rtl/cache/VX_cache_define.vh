@@ -55,6 +55,13 @@
 
 `define CACHE_REQ_INFO_RNG      CORE_TAG_WIDTH-1:(CORE_TAG_WIDTH-`NW_BITS-32)
 
+// Assignment 6
+`ifdef DBG_CACHE_REQ_INFO
+`define CACHE_REQ_INFO_PREFETCH CORE_TAG_WIDTH-CACHE_REQ_INFO_RNG-1
+`else
+`define CACHE_REQ_INFO_PREFETCH CORE_TAG_WIDTH-1
+`endif
+
 ///////////////////////////////////////////////////////////////////////////////
 
 `define CORE_RSP_TAGS           ((CORE_TAG_ID_BITS != 0) ? 1 : NUM_REQS)

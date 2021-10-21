@@ -279,11 +279,13 @@
 `define DCACHE_LINE_SIZE        `L1_BLOCK_SIZE
 
 // TAG sharing enable     
-`define LSUQ_ADDR_BITS          `LOG2UP(`LSUQ_SIZE)  
-`define DCACHE_CORE_TAG_ID_BITS (`LSUQ_ADDR_BITS + `NC_FLAG_BITS + `SM_ENABLE)
+`define LSUQ_ADDR_BITS          `LOG2UP(`LSUQ_SIZE) 
+// Assignment 6
+`define PREFETCH_TAG_BIT        1 
+`define DCACHE_CORE_TAG_ID_BITS (`PREFETCH_TAG_BIT + `LSUQ_ADDR_BITS + `NC_FLAG_BITS + `SM_ENABLE)
 
 // Input request tag bits
-`define DCACHE_CORE_TAG_WIDTH   (1 + `DBG_CACHE_REQ_MDATAW + `DCACHE_CORE_TAG_ID_BITS)
+`define DCACHE_CORE_TAG_WIDTH   (`DBG_CACHE_REQ_MDATAW + `DCACHE_CORE_TAG_ID_BITS)
  
 // Memory request data bits
 `define DCACHE_MEM_DATA_WIDTH   (`DCACHE_LINE_SIZE * 8)

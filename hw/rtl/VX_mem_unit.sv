@@ -370,6 +370,8 @@ module VX_mem_unit # (
     assign perf_memsys_if.dcache_mshr_stalls = perf_dcache_if.mshr_stalls;    
     assign perf_memsys_if.dcache_pipe_stalls = perf_dcache_if.pipe_stalls;
     assign perf_memsys_if.dcache_crsp_stalls = perf_dcache_if.crsp_stalls;
+    // Assignment 6
+    assign perf_memsys_if.dcache_prefetch_requests = perf_dcache_if.prefetch_requests;
 
 if (`SM_ENABLE) begin
     assign perf_memsys_if.smem_reads         = perf_smem_if.reads;

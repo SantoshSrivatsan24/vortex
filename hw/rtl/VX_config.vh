@@ -193,6 +193,10 @@
 `define CSR_MPM_DCACHE_PIPE_ST_H    12'hB94
 `define CSR_MPM_DCACHE_CRSP_ST      12'hB15     // core response stalls
 `define CSR_MPM_DCACHE_CRSP_ST_H    12'hB95
+// Assignment 6
+`define CSR_MPM_DCACHE_PREFETCH_REQUESTS     12'hB1D     // total prefetch requests
+`define CSR_MPM_DCACHE_PREFETCH_REQUESTS_H   12'hB9D
+
 // PERF: smem
 `define CSR_MPM_SMEM_READS          12'hB16     // total reads
 `define CSR_MPM_SMEM_READS_H        12'hB96
