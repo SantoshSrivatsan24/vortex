@@ -171,6 +171,10 @@ module VX_csr_data #(
             // Assignment 6
             `CSR_MPM_DCACHE_PREFETCH_REQUESTS    : read_data_r = perf_memsys_if.dcache_prefetch_requests[31:0];
             `CSR_MPM_DCACHE_PREFETCH_REQUESTS_H  : read_data_r = 32'(perf_memsys_if.dcache_prefetch_requests[`PERF_CTR_BITS-1:32]);
+            `CSR_MPM_DCACHE_PREFETCHED_BLOCKS    : read_data_r = perf_memsys_if.dcache_prefetched_blocks[31:0];
+            `CSR_MPM_DCACHE_PREFETCHED_BLOCKS_H  : read_data_r = 32'(perf_memsys_if.dcache_prefetched_blocks[`PERF_CTR_BITS-1:32]);
+            `CSR_MPM_DCACHE_UNUSED_PREFETCHED_BLOCKS    : read_data_r = perf_memsys_if.dcache_unused_prefetched_blocks[31:0];
+            `CSR_MPM_DCACHE_UNUSED_PREFETCHED_BLOCKS_H  : read_data_r = 32'(perf_memsys_if.dcache_unused_prefetched_blocks[`PERF_CTR_BITS-1:32]);
             // PERF: smem            
             `CSR_MPM_SMEM_READS     : read_data_r = perf_memsys_if.smem_reads[31:0];
             `CSR_MPM_SMEM_READS_H   : read_data_r = 32'(perf_memsys_if.smem_reads[`PERF_CTR_BITS-1:32]);

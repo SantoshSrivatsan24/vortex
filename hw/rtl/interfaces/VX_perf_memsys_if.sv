@@ -20,6 +20,10 @@ interface VX_perf_memsys_if ();
     wire [`PERF_CTR_BITS-1:0] dcache_crsp_stalls;
     // Assignment 6
     wire [`PERF_CTR_BITS-1:0] dcache_prefetch_requests;
+    wire [`PERF_CTR_BITS-1:0] dcache_prefetched_blocks;
+    wire [`PERF_CTR_BITS-1:0] dcache_unused_prefetched_blocks;
+
+
 
     wire [`PERF_CTR_BITS-1:0] smem_reads;
     wire [`PERF_CTR_BITS-1:0] smem_writes;
@@ -45,6 +49,8 @@ interface VX_perf_memsys_if ();
         output dcache_crsp_stalls,
         // Assignment 6
         output dcache_prefetch_requests,
+        output dcache_prefetched_blocks,
+        output dcache_unused_prefetched_blocks,
         output smem_reads,
         output smem_writes,
         output smem_bank_stalls,
@@ -69,6 +75,8 @@ interface VX_perf_memsys_if ();
         input dcache_crsp_stalls,
         // Assignment 6
         input dcache_prefetch_requests,
+        input dcache_prefetched_blocks,
+        input dcache_unused_prefetched_blocks,
         input smem_reads,
         input smem_writes,
         input smem_bank_stalls,

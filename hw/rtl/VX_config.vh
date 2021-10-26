@@ -196,6 +196,11 @@
 // Assignment 6
 `define CSR_MPM_DCACHE_PREFETCH_REQUESTS     12'hB1D     // total prefetch requests
 `define CSR_MPM_DCACHE_PREFETCH_REQUESTS_H   12'hB9D
+`define CSR_MPM_DCACHE_PREFETCHED_BLOCKS     12'hB1E      // total prefetched blocks
+`define CSR_MPM_DCACHE_PREFETCHED_BLOCKS_H   12'hB9E 
+`define CSR_MPM_DCACHE_UNUSED_PREFETCHED_BLOCKS     12'hB1F   // total unused prefetched blocks  
+`define CSR_MPM_DCACHE_UNUSED_PREFETCHED_BLOCKS_H   12'hB9F 
+
 
 // PERF: smem
 `define CSR_MPM_SMEM_READS          12'hB16     // total reads

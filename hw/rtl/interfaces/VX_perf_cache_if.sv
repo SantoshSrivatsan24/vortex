@@ -15,6 +15,9 @@ interface VX_perf_cache_if ();
     wire [`PERF_CTR_BITS-1:0] crsp_stalls;
     // Assignment 6
     wire [`PERF_CTR_BITS-1:0] prefetch_requests;
+    wire [`PERF_CTR_BITS-1:0] prefetched_blocks;
+    wire [`PERF_CTR_BITS-1:0] unused_prefetched_blocks;
+
 
     modport master (
         output reads,
@@ -26,7 +29,9 @@ interface VX_perf_cache_if ();
         output pipe_stalls,
         output crsp_stalls,
         // Assignment 6
-        output prefetch_requests
+        output prefetch_requests,
+        output prefetched_blocks,
+        output unused_prefetched_blocks
     );
 
     modport slave (
@@ -39,7 +44,9 @@ interface VX_perf_cache_if ();
         input pipe_stalls,
         input crsp_stalls,
         // Assignment 6
-        input prefetch_requests
+        input prefetch_requests,
+        input prefetched_blocks,
+        input unused_prefetched_blocks
     );
 
 endinterface

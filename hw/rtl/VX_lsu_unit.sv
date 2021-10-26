@@ -350,7 +350,7 @@ module VX_lsu_unit #(
                 `TRACE_ARRAY1D(dcache_req_if.data, `NUM_THREADS);
                 dpi_trace("\n");
             end else begin
-                dpi_trace("ASSIGNMENT 6RD: %d: D$%0d Rd Req: req_is_prefetch=%b, wid=%0d, PC=%0h, tmask=%b, addr=", $time, CORE_ID, req_is_prefetch, req_wid, req_pc, dcache_req_fire);
+                dpi_trace("ASSIGNMENT 6 LSU: %d: D$%0d Rd Req: req_is_prefetch=%b, wid=%0d, PC=%0h, tmask=%b, addr=", $time, CORE_ID, req_is_prefetch, req_wid, req_pc, dcache_req_fire);
                 `TRACE_ARRAY1D(req_addr, `NUM_THREADS);
                 dpi_trace(", tag=%0h, byteen=%0h, type=", req_tag, dcache_req_if.byteen);
                 `TRACE_ARRAY1D(req_addr_type, `NUM_THREADS);
