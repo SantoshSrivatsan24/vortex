@@ -17,6 +17,8 @@ interface VX_perf_cache_if ();
     wire [`PERF_CTR_BITS-1:0] prefetch_requests;
     wire [`PERF_CTR_BITS-1:0] prefetched_blocks;
     wire [`PERF_CTR_BITS-1:0] unused_prefetched_blocks;
+    wire [`PERF_CTR_BITS-1:0] late_prefetches;
+
 
 
     modport master (
@@ -31,7 +33,8 @@ interface VX_perf_cache_if ();
         // Assignment 6
         output prefetch_requests,
         output prefetched_blocks,
-        output unused_prefetched_blocks
+        output unused_prefetched_blocks,
+        output late_prefetches
     );
 
     modport slave (
@@ -46,7 +49,8 @@ interface VX_perf_cache_if ();
         // Assignment 6
         input prefetch_requests,
         input prefetched_blocks,
-        input unused_prefetched_blocks
+        input unused_prefetched_blocks,
+        input late_prefetches
     );
 
 endinterface

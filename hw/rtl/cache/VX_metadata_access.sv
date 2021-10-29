@@ -30,7 +30,6 @@ module VX_metadata_access #(
     input wire                          fill, 
     input wire                          rw,
     input wire                          prefetch,
-    input wire                          prefetched_block,
     output wire                         read_used           
 );
 
@@ -60,15 +59,14 @@ module VX_metadata_access #(
     );
 
     `UNUSED_VAR     (stall)
-    `UNUSED_VAR     (prefetched_block)
         
 `ifdef DBG_PRINT_CACHE_METADATA
     always @(posedge clk) begin
         if (fill) begin
-            dpi_trace("%d: cache%0d:%0d metadata-fill: write_used=%0b, read_used=%0b, wren=%0b, prefetch_instruction=%0b, prefetched_block=%0b, addr=%0h, blk_addr=%0d\n", $time, CACHE_ID, BANK_ID, write_used, read_used, wren, prefetch, prefetched_block, `LINE_TO_BYTE_ADDR(addr, BANK_ID), line_addr);
+            dpi_trace("%d: cache%0d:%0d metadata-fill: write_used=%0b, read_used=%0b, wren=%0b, prefetch_instruction=%0b, addr=%0h, blk_addr=%0d\n", $time, CACHE_ID, BANK_ID, write_used, read_used, wren, prefetch, `LINE_TO_BYTE_ADDR(addr, BANK_ID), line_addr);
         end
         if (wren) begin                
-            dpi_trace("%d: cache%0d:%0d metadata-access: write_used=%0b, read_used=%0b, wren=%0b, prefetch_instruction=%0b, prefetched_block=%0b, addr=%0h, wid=%0d, PC=%0h, blk_addr=%0d\n", $time, CACHE_ID, BANK_ID, write_used, read_used, wren, prefetch, prefetched_block, `LINE_TO_BYTE_ADDR(addr, BANK_ID), debug_wid, debug_pc, line_addr);                
+            dpi_trace("%d: cache%0d:%0d metadata-access: write_used=%0b, read_used=%0b, wren=%0b, prefetch_instruction=%0b, addr=%0h, wid=%0d, PC=%0h, blk_addr=%0d\n", $time, CACHE_ID, BANK_ID, write_used, read_used, wren, prefetch, `LINE_TO_BYTE_ADDR(addr, BANK_ID), debug_wid, debug_pc, line_addr);                
         end           
     end    
 `endif

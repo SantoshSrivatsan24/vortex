@@ -56,6 +56,7 @@ module VX_bank #(
     output wire perf_prefetch_requests,
     output wire perf_prefetched_blocks,
     output wire perf_unused_prefetched_blocks,
+    output wire perf_late_prefetches,
 `endif
 
     // Core Request    
@@ -170,8 +171,9 @@ module VX_bank #(
     // Assignment 6
     // store info about whether the instruction in the pipe is a software prefetch
     wire                            creq_prefetch, is_prefetch_st0, is_prefetch_st1, mshr_prefetch; 
-    // store info about whether the the block brought in by prefetch is used or not
-    wire                            is_prefetch_used_st0, is_prefetch_used_st1;                      
+    // store info about whether a block is brought in by software prefetch
+    wire                            is_prefetched_block_st0, is_prefetched_block_st1;  
+    wire                            mshr_late_prefetch_st0, mshr_late_prefetch_st1;                    
  
     // prevent read-during-write hazard when accessing tags/data block RAMs
     wire rdw_fill_hazard  = valid_st0 && is_fill_st0;
@@ -246,7 +248,7 @@ module VX_bank #(
             mshr_valid ? mshr_tag : creq_tag,
             mshr_valid ? mshr_dequeue_id : mem_rsp_id,
             // Assignment 6
-            mrsq_enable ? mshr_prefetch : creq_prefetch
+            mrsq_enable || mshr_enable ? mshr_prefetch : creq_prefetch
         }),
         .data_out ({valid_st0, is_flush_st0, is_mshr_st0, is_fill_st0, is_read_st0, is_write_st0, addr_st0, wdata_st0, wsel_st0, byteen_st0, req_tid_st0, pmask_st0, tag_st0, mshr_id_st0, is_prefetch_st0})
     );
@@ -282,11 +284,6 @@ module VX_bank #(
         .debug_wid (debug_wid_st0),
     `endif
 
-    // Assignment 6
-    `ifdef PERF_ENABLE
-        .perf_unused_prefetched_blocks(perf_unused_prefetched_blocks),
-    `endif
-
         .stall      (crsq_stall),
 
         // read/Fill
@@ -296,24 +293,24 @@ module VX_bank #(
         .flush     (do_flush_st0), 
         // Assignment 6
         .write_prefetch(is_prefetch_st0), 
-        .read_prefetch_used(is_prefetch_used_st0),
+        .read_prefetched_block(is_prefetched_block_st0),
         .tag_match (tag_match_st0)
     );
 
     // we have a core request hit
     assign miss_st0 = (is_read_st0 || is_write_st0) && ~tag_match_st0;
-    
+
     wire [MSHR_ADDR_WIDTH-1:0] mshr_id_a_st0 = (is_read_st0 || is_write_st0) ? mshr_alloc_id : mshr_id_st0;
 
     VX_pipe_register #(
-        .DATAW  (1 + 1 + 1 + 1 + 1 + 1 + `LINE_ADDR_WIDTH + `CACHE_LINE_WIDTH + NUM_PORTS * (WORD_SELECT_BITS + WORD_SIZE + `REQS_BITS + 1 + CORE_TAG_WIDTH) + MSHR_ADDR_WIDTH + 1 + 1 + 1),
+        .DATAW  (1 + 1 + 1 + 1 + 1 + 1 + `LINE_ADDR_WIDTH + `CACHE_LINE_WIDTH + NUM_PORTS * (WORD_SELECT_BITS + WORD_SIZE + `REQS_BITS + 1 + CORE_TAG_WIDTH) + MSHR_ADDR_WIDTH + 1 + 1 + 1 + 1),
         .RESETW (1)
     ) pipe_reg1 (
         .clk      (clk),
         .reset    (reset),
         .enable   (!crsq_stall),
-        .data_in  ({valid_st0, is_mshr_st0, is_fill_st0, is_read_st0, is_write_st0, miss_st0, addr_st0, wdata_st0, wsel_st0, byteen_st0, req_tid_st0, pmask_st0, tag_st0, mshr_id_a_st0, mshr_pending_st0, is_prefetch_st0, is_prefetch_used_st0}),
-        .data_out ({valid_st1, is_mshr_st1, is_fill_st1, is_read_st1, is_write_st1, miss_st1, addr_st1, wdata_st1, wsel_st1, byteen_st1, req_tid_st1, pmask_st1, tag_st1, mshr_id_st1,   mshr_pending_st1, is_prefetch_st1, is_prefetch_used_st1})
+        .data_in  ({valid_st0, is_mshr_st0, is_fill_st0, is_read_st0, is_write_st0, miss_st0, addr_st0, wdata_st0, wsel_st0, byteen_st0, req_tid_st0, pmask_st0, tag_st0, mshr_id_a_st0, mshr_pending_st0, mshr_late_prefetch_st0, is_prefetch_st0, is_prefetched_block_st0}),
+        .data_out ({valid_st1, is_mshr_st1, is_fill_st1, is_read_st1, is_write_st1, miss_st1, addr_st1, wdata_st1, wsel_st1, byteen_st1, req_tid_st1, pmask_st1, tag_st1, mshr_id_st1,   mshr_pending_st1, mshr_late_prefetch_st1, is_prefetch_st1, is_prefetched_block_st1})
     ); 
 
 `ifdef DBG_CACHE_REQ_INFO
@@ -363,7 +360,39 @@ module VX_bank #(
         .write_data (creq_data_st1),
         .read_data  (rdata_st1)
     );
-    
+
+    //Assignment 6
+    wire is_used_st1;
+
+    VX_metadata_access #(
+        .BANK_ID          (BANK_ID),
+        .CACHE_ID         (CACHE_ID),
+        .CACHE_SIZE       (CACHE_SIZE),
+        .CACHE_LINE_SIZE  (CACHE_LINE_SIZE),
+        .NUM_BANKS        (NUM_BANKS),
+        .WORD_SIZE        (WORD_SIZE),   
+        .BANK_ADDR_OFFSET (BANK_ADDR_OFFSET)
+    ) metadata_access (
+
+        .clk        (clk),
+        .reset      (reset),
+
+    `ifdef DBG_CACHE_REQ_INFO
+        .debug_pc   (debug_pc_st1),
+        .debug_wid  (debug_wid_st1),
+    `endif
+
+        .stall      (crsq_stall),
+
+        .addr       (addr_st1),
+        .fill       (do_fill_st1),
+        .rw         ((do_read_st1 || do_mshr_st1) || (do_write_st1 && !miss_st1)),
+        .prefetch   (is_prefetch_st1),
+        .read_used  (is_used_st1)
+    );
+
+
+
     wire mshr_allocate = do_read_st0 && !crsq_stall;
     wire mshr_replay   = do_fill_st0 && !crsq_stall;
     wire mshr_lookup   = mshr_allocate;
@@ -417,6 +446,7 @@ module VX_bank #(
         .lookup_id          (mshr_alloc_id),
         .lookup_addr        (addr_st0),
         .lookup_match       (mshr_pending_st0),
+        .lookup_prefetch_match (mshr_late_prefetch_st0),
 
         // fill
         .fill_valid         (mem_rsp_fire),
@@ -435,7 +465,6 @@ module VX_bank #(
         .release_id         (mshr_id_st1)
     );
 
-    `UNUSED_VAR(is_prefetch_st1)
 
     // Enqueue core response
 
@@ -529,15 +558,24 @@ module VX_bank #(
     `SCOPE_ASSIGN (addr_st0, `LINE_TO_BYTE_ADDR(addr_st0, BANK_ID));
     `SCOPE_ASSIGN (addr_st1, `LINE_TO_BYTE_ADDR(addr_st1, BANK_ID));
 
+
 `ifdef PERF_ENABLE
     assign perf_read_misses  = do_read_st1 && miss_st1;
     assign perf_write_misses = do_write_st1 && miss_st1;
     assign perf_pipe_stalls  = crsq_stall || mreq_alm_full || mshr_alm_full;
     assign perf_mshr_stalls  = mshr_alm_full;
     // Assignment 6
-    assign perf_prefetch_requests = (creq_fire) && (&creq_byteen) ? creq_prefetch : 0;
-    assign perf_prefetched_blocks = (mreq_push) && (is_prefetch_st1) ? 1 : 0;
+    assign perf_prefetch_requests = (creq_fire) && (&creq_byteen) ? creq_prefetch : 1'b0;
+    assign perf_prefetched_blocks = mreq_push && is_prefetch_st1;
+    assign perf_unused_prefetched_blocks = is_fill_st1 && is_prefetched_block_st1 && !is_used_st1;
+    assign perf_late_prefetches = mshr_fire && mshr_late_prefetch_st1;
 `endif
+
+    // Assignment 6
+    `UNUSED_VAR(is_prefetch_st1)
+    `UNUSED_VAR(is_prefetched_block_st1)
+    `UNUSED_VAR(is_used_st1)
+    `UNUSED_VAR(mshr_late_prefetch_st1)
 
 `ifdef DBG_PRINT_CACHE_BANK
     wire crsq_fire = crsq_valid && crsq_ready;
@@ -555,22 +593,22 @@ module VX_bank #(
             dpi_trace("%d: cache%0d:%0d fill-rsp: addr=%0h, id=%0d, data=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(mem_rsp_addr, BANK_ID), mem_rsp_id, mem_rsp_data);
         end
         if (mshr_fire) begin
-            dpi_trace("ASSIGNMENT 6 BANK: %d: cache%0d:%0d mshr-pop: addr=%0h, tag=%0h, pmask=%b, tid=%0d, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(mshr_addr, BANK_ID), mshr_tag, mshr_pmask, mshr_tid, debug_wid_sel, debug_pc_sel);
+            dpi_trace("%d: cache%0d:%0d mshr-pop: addr=%0h, tag=%0h, pmask=%b, tid=%0d, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(mshr_addr, BANK_ID), mshr_tag, mshr_pmask, mshr_tid, debug_wid_sel, debug_pc_sel);
         end
         if (creq_fire) begin
             if (creq_rw)
-                dpi_trace("ASSIGNMENT 6 BANK: %d: cache%0d:%0d core-wr-req: addr=%0h, tag=%0b, prefetch=%0d, prefetch_position=%0d, CORE_TAG_WIDTH=%0d, pmask=%b, tid=%0d, byteen=%b, data=%0h, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(creq_addr, BANK_ID), creq_tag, creq_tag[0][`CACHE_REQ_INFO_PREFETCH], `CACHE_REQ_INFO_PREFETCH, CORE_TAG_WIDTH, creq_pmask, creq_tid, creq_byteen, creq_data, debug_wid_sel, debug_pc_sel);
+                dpi_trace("%d: cache%0d:%0d core-wr-req: addr=%0h, tag=%0b, prefetch=%0d, prefetch_position=%0d, CORE_TAG_WIDTH=%0d, pmask=%b, tid=%0d, byteen=%b, data=%0h, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(creq_addr, BANK_ID), creq_tag, creq_tag[0][`CACHE_REQ_INFO_PREFETCH], `CACHE_REQ_INFO_PREFETCH, CORE_TAG_WIDTH, creq_pmask, creq_tid, creq_byteen, creq_data, debug_wid_sel, debug_pc_sel);
             else
-                dpi_trace("ASSIGNMENT 6 BANK: %d: cache%0d:%0d core-rd-req: addr=%0h, tag=%0b, prefetch=%0d, prefetch_position=%0d, CORE_TAG_WIDTH=%0d, pmask=%b, tid=%0d, byteen=%b, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(creq_addr, BANK_ID), creq_tag, creq_tag[0][`CACHE_REQ_INFO_PREFETCH], `CACHE_REQ_INFO_PREFETCH, CORE_TAG_WIDTH, creq_pmask, creq_tid, creq_byteen, debug_wid_sel, debug_pc_sel);
+                dpi_trace("%d: cache%0d:%0d core-rd-req: addr=%0h, tag=%0b, prefetch=%0d, prefetch_position=%0d, CORE_TAG_WIDTH=%0d, pmask=%b, tid=%0d, byteen=%b, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(creq_addr, BANK_ID), creq_tag, creq_tag[0][`CACHE_REQ_INFO_PREFETCH], `CACHE_REQ_INFO_PREFETCH, CORE_TAG_WIDTH, creq_pmask, creq_tid, creq_byteen, debug_wid_sel, debug_pc_sel);
         end
         if (crsq_fire) begin
-            dpi_trace("ASSIGNMENT 6 BANK: %d: cache%0d:%0d core-rsp: addr=%0h, tag=%0b, pmask=%b, tid=%0d, data=%0h, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(addr_st1, BANK_ID), crsq_tag, crsq_pmask, crsq_tid, crsq_data, debug_wid_st1, debug_pc_st1);
+            dpi_trace("%d: cache%0d:%0d core-rsp: addr=%0h, tag=%0b, pmask=%b, tid=%0d, data=%0h, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(addr_st1, BANK_ID), crsq_tag, crsq_pmask, crsq_tid, crsq_data, debug_wid_st1, debug_pc_st1);
         end
         if (mreq_push) begin
             if (is_write_st1)
                 dpi_trace("%d: cache%0d:%0d writeback: addr=%0h, data=%0h, byteen=%b, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(mreq_addr, BANK_ID), mreq_data, mreq_byteen, debug_wid_st1, debug_pc_st1);
             else
-                dpi_trace("ASSIGNMENT 6 BANK: %d: cache%0d:%0d fill-req: addr=%0h, id=%0d, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(mreq_addr, BANK_ID), mreq_id, debug_wid_st1, debug_pc_st1);
+                dpi_trace("%d: cache%0d:%0d fill-req: addr=%0h, id=%0d, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, `LINE_TO_BYTE_ADDR(mreq_addr, BANK_ID), mreq_id, debug_wid_st1, debug_pc_st1);
         end
     end    
 `endif

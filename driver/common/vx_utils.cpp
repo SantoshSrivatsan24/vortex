@@ -120,6 +120,7 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
   uint64_t dcache_prefetch_requests = 0;
   uint64_t dcache_prefetched_blocks = 0;
   uint64_t dcache_unused_prefetched_blocks = 0;
+  uint64_t dcache_late_prefetches   = 0;
   // PERF: SMEM
   uint64_t smem_reads = 0;
   uint64_t smem_writes = 0;
@@ -256,6 +257,10 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
     uint64_t dcache_unused_prefetched_blocks_per_core = get_csr_64(staging_ptr, CSR_MPM_DCACHE_UNUSED_PREFETCHED_BLOCKS);
     if (num_cores > 1) fprintf(stream, "PERF: core%d: dcache unused prefetched blocks=%ld\n", core_id, dcache_unused_prefetched_blocks_per_core);
     dcache_unused_prefetched_blocks += dcache_unused_prefetched_blocks_per_core;
+    // total late prefetches
+    uint64_t dcache_late_prefetches_per_core = get_csr_64(staging_ptr, CSR_MPM_DCACHE_LATE_PREFETCHES);
+    if (num_cores > 1) fprintf(stream, "PERF: core%d: dcache late prefetches=%ld\n", core_id, dcache_late_prefetches_per_core);
+    dcache_late_prefetches += dcache_late_prefetches_per_core;
 
     // PERF: SMEM
     // total reads
@@ -323,6 +328,7 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
   fprintf(stream, "PERF: dcache prefetch requests=%ld\n", dcache_prefetch_requests);
   fprintf(stream, "PERF: dcache prefetched blocks=%ld\n", dcache_prefetched_blocks);
   fprintf(stream, "PERF: dcache unused prefetched blocks=%ld\n", dcache_unused_prefetched_blocks);
+  fprintf(stream, "PERF: dcache late prefetches=%ld\n", dcache_late_prefetches);
   fprintf(stream, "PERF: smem reads=%ld\n", smem_reads);
   fprintf(stream, "PERF: smem writes=%ld\n", smem_writes); 
   fprintf(stream, "PERF: smem bank stalls=%ld (utilization=%d%%)\n", smem_bank_stalls, smem_bank_utilization);

@@ -107,6 +107,8 @@ module VX_cache #(
     wire [NUM_BANKS-1:0] perf_prefetch_requests_per_bank;
     wire [NUM_BANKS-1:0] perf_prefetched_blocks_per_bank;
     wire [NUM_BANKS-1:0] perf_unused_prefetched_blocks_per_bank;
+    wire [NUM_BANKS-1:0] perf_late_prefetches_per_bank;
+
 `endif
 
     ///////////////////////////////////////////////////////////////////////////
@@ -602,6 +604,7 @@ module VX_cache #(
             .perf_prefetch_requests (perf_prefetch_requests_per_bank[i]),
             .perf_prefetched_blocks (perf_prefetched_blocks_per_bank[i]),
             .perf_unused_prefetched_blocks (perf_unused_prefetched_blocks_per_bank[i]),
+            .perf_late_prefetches   (perf_late_prefetches_per_bank[i]),
 
         `endif
                        
@@ -731,6 +734,8 @@ module VX_cache #(
     wire [$clog2(NUM_BANKS+1)-1:0] perf_prefetch_requests_per_cycle; 
     wire [$clog2(NUM_BANKS+1)-1:0] perf_prefetched_blocks_per_cycle; 
     wire [$clog2(NUM_BANKS+1)-1:0] perf_unused_prefetched_blocks_per_cycle; 
+    wire [$clog2(NUM_BANKS+1)-1:0] perf_late_prefetches_per_cycle; 
+   
 
     
     `POP_COUNT(perf_read_miss_per_cycle, perf_read_miss_per_bank);
@@ -741,6 +746,7 @@ module VX_cache #(
     `POP_COUNT(perf_prefetch_requests_per_cycle, perf_prefetch_requests_per_bank);
     `POP_COUNT(perf_prefetched_blocks_per_cycle, perf_prefetched_blocks_per_bank);
     `POP_COUNT(perf_unused_prefetched_blocks_per_cycle, perf_unused_prefetched_blocks_per_bank);
+    `POP_COUNT(perf_late_prefetches_per_cycle, perf_late_prefetches_per_bank);
 
 
     reg [`PERF_CTR_BITS-1:0] perf_core_reads;
@@ -754,6 +760,7 @@ module VX_cache #(
     reg [`PERF_CTR_BITS-1:0] perf_prefetch_requests;
     reg [`PERF_CTR_BITS-1:0] perf_prefetched_blocks;
     reg [`PERF_CTR_BITS-1:0] perf_unused_prefetched_blocks;
+    reg [`PERF_CTR_BITS-1:0] perf_late_prefetches;
 
 
 
@@ -770,6 +777,7 @@ module VX_cache #(
             perf_prefetch_requests <= 0;
             perf_prefetched_blocks <= 0;
             perf_unused_prefetched_blocks <= 0;
+            perf_late_prefetches   <= 0;
         end else begin
             perf_core_reads   <= perf_core_reads  + `PERF_CTR_BITS'(perf_core_reads_per_cycle);
             perf_core_writes  <= perf_core_writes + `PERF_CTR_BITS'(perf_core_writes_per_cycle);
@@ -782,6 +790,7 @@ module VX_cache #(
             perf_prefetch_requests <= perf_prefetch_requests + `PERF_CTR_BITS'(perf_prefetch_requests_per_cycle);
             perf_prefetched_blocks <= perf_prefetched_blocks + `PERF_CTR_BITS'(perf_prefetched_blocks_per_cycle);
             perf_unused_prefetched_blocks <= perf_unused_prefetched_blocks + `PERF_CTR_BITS'(perf_unused_prefetched_blocks_per_cycle);
+            perf_late_prefetches   <= perf_late_prefetches   + `PERF_CTR_BITS'(perf_late_prefetches_per_cycle);
         end
     end
 
@@ -796,6 +805,7 @@ module VX_cache #(
     assign perf_cache_if.prefetch_requests = perf_prefetch_requests;
     assign perf_cache_if.prefetched_blocks = perf_prefetched_blocks;
     assign perf_cache_if.unused_prefetched_blocks = perf_unused_prefetched_blocks;
+    assign perf_cache_if.late_prefetches   = perf_late_prefetches;
 
 
 `endif

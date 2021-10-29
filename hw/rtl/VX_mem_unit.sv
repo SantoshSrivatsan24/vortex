@@ -374,6 +374,8 @@ module VX_mem_unit # (
     assign perf_memsys_if.dcache_prefetch_requests = perf_dcache_if.prefetch_requests;
     assign perf_memsys_if.dcache_prefetched_blocks = perf_dcache_if.prefetched_blocks;
     assign perf_memsys_if.dcache_unused_prefetched_blocks = perf_dcache_if.unused_prefetched_blocks;
+    assign perf_memsys_if.dcache_late_prefetches   = perf_dcache_if.late_prefetches;
+
 
 
 

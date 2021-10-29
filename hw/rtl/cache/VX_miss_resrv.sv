@@ -55,7 +55,7 @@ module VX_miss_resrv #(
     input wire [`LINE_ADDR_WIDTH-1:0]   lookup_addr,
     output wire                         lookup_match,
     // Assignment 6
-    // output wire lookup_prefetch,
+    output wire                         lookup_prefetch_match,
     
     // dequeue    
     output wire                         dequeue_valid,
@@ -72,6 +72,8 @@ module VX_miss_resrv #(
     `UNUSED_PARAM (BANK_ID)
     
     reg [MSHR_SIZE-1:0][`LINE_ADDR_WIDTH-1:0] addr_table, addr_table_n;
+    // Assignment 6
+    reg [MSHR_SIZE-1:0] prefetch_table, prefetch_table_n;
     reg [MSHR_SIZE-1:0] valid_table, valid_table_n;
     reg [MSHR_SIZE-1:0] ready_table, ready_table_n;
     
@@ -85,16 +87,20 @@ module VX_miss_resrv #(
     reg [MSHR_SIZE-1:0] ready_table_x;
 
     wire [MSHR_SIZE-1:0] addr_matches;
+    // Assignment 6
+    wire [MSHR_SIZE-1:0] prefetch_matches;
     
     wire allocate_fire = allocate_valid && allocate_ready;
     
     wire dequeue_fire = dequeue_valid && dequeue_ready;
 
     // Assignment 6
-    // wire prefetch = allocate_data[0];
+    wire allocate_prefetch = allocate_data[0];
 
     for (genvar i = 0; i < MSHR_SIZE; ++i) begin
         assign addr_matches[i] = (addr_table[i] == lookup_addr);
+        // Assignment 6
+        assign prefetch_matches[i] = prefetch_table[i] && addr_matches[i];
     end
     
     always @(*) begin
@@ -128,6 +134,8 @@ module VX_miss_resrv #(
         valid_table_n = valid_table_x;
         ready_table_n = ready_table_x;
         addr_table_n  = addr_table;
+        // Assignment 6
+        prefetch_table_n = prefetch_table;
         dequeue_val_n = dequeue_val_r;
         dequeue_id_n  = dequeue_id_r;
 
@@ -140,6 +148,8 @@ module VX_miss_resrv #(
             valid_table_n[allocate_id] = 1;
             ready_table_n[allocate_id] = 0;
             addr_table_n[allocate_id]  = allocate_addr;
+            // Assignment 6
+            prefetch_table_n[allocate_id] = allocate_prefetch;
         end
 
         if (fill_valid) begin
@@ -149,6 +159,8 @@ module VX_miss_resrv #(
 
         if (release_valid) begin
             valid_table_n[release_id] = 0;
+            // Assignment 6
+            prefetch_table_n[release_id] = 0;
         end
     end
 
@@ -157,13 +169,20 @@ module VX_miss_resrv #(
             valid_table    <= 0;
             allocate_rdy_r <= 0;
             dequeue_val_r  <= 0;
+            // Assignment 6
+            prefetch_table <= 0;
         end else begin
             valid_table    <= valid_table_n;
             allocate_rdy_r <= allocate_rdy_n;
-            dequeue_val_r  <= dequeue_val_n;      
+            dequeue_val_r  <= dequeue_val_n;   
+            // Assignment 6
+            prefetch_table <= prefetch_table_n;
+               
         end
         ready_table   <= ready_table_n;
-        addr_table    <= addr_table_n;              
+        addr_table    <= addr_table_n;       
+        // Assignment 6
+        prefetch_table<= prefetch_table_n;       
         dequeue_id_r  <= dequeue_id_n;
         allocate_id_r <= allocate_id_n;
 
@@ -200,10 +219,13 @@ module VX_miss_resrv #(
     assign dequeue_addr   = addr_table[dequeue_id_r];
 
     wire [MSHR_SIZE-1:0] lookup_entries;
+
     for (genvar i = 0; i < MSHR_SIZE; ++i) begin
         assign lookup_entries[i] = (i != lookup_id);
     end
     assign lookup_match = |(lookup_entries & valid_table & addr_matches);
+    // Assignment 6
+    assign lookup_prefetch_match = |(lookup_entries & valid_table & prefetch_matches);
 
     `UNUSED_VAR (lookup_valid)
 
@@ -211,19 +233,19 @@ module VX_miss_resrv #(
     always @(posedge clk) begin
         if (allocate_fire || fill_valid || dequeue_fire || lookup_replay || lookup_valid || release_valid) begin
             if (allocate_fire)
-                dpi_trace("ASSIGNMENT 6 MSHR: %d: cache%0d:%0d mshr-allocate: mshr_tag=%0b, addr=%0h, id=%0d, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, dequeue_data,
+                dpi_trace("%d: cache%0d:%0d mshr-allocate: mshr_tag=%0b, addr=%0h, id=%0d, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, dequeue_data,
                     `LINE_TO_BYTE_ADDR(allocate_addr, BANK_ID), allocate_id, deq_debug_wid, deq_debug_pc);
             if (fill_valid)
-                dpi_trace("ASSIGNMENT 6 MSHR: %d: cache%0d:%0d mshr-fill: addr=%0h, id=%0d, addr=%0h\n", $time, CACHE_ID, BANK_ID,
+                dpi_trace("%d: cache%0d:%0d mshr-fill: addr=%0h, id=%0d, addr=%0h\n", $time, CACHE_ID, BANK_ID,
                     `LINE_TO_BYTE_ADDR(addr_table[fill_id], BANK_ID), fill_id, `LINE_TO_BYTE_ADDR(fill_addr, BANK_ID));
             if (dequeue_fire)
                 dpi_trace("%d: cache%0d:%0d mshr-dequeue: mshr_tag=%0b, addr=%0h, id=%0d, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, dequeue_data,
                     `LINE_TO_BYTE_ADDR(dequeue_addr, BANK_ID), dequeue_id_r, deq_debug_wid, deq_debug_pc);      
             if (lookup_replay)
-                dpi_trace("ASSIGNMENT 6 MSHR: %d: cache%0d:%0d mshr-replay: addr=%0h, id=%0d\n", $time, CACHE_ID, BANK_ID,
+                dpi_trace("%d: cache%0d:%0d mshr-replay: addr=%0h, id=%0d\n", $time, CACHE_ID, BANK_ID,
                     `LINE_TO_BYTE_ADDR(lookup_addr, BANK_ID), lookup_id);
             if (lookup_valid)
-                dpi_trace("ASSIGNMENT 6 MSHR: %d: cache%0d:%0d mshr-lookup: addr=%0h, id=%0d, match=%b, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID,
+                dpi_trace("%d: cache%0d:%0d mshr-lookup: addr=%0h, id=%0d, match=%b, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID,
                     `LINE_TO_BYTE_ADDR(lookup_addr, BANK_ID), lookup_id, lookup_match, lkp_debug_wid, lkp_debug_pc);
             if (release_valid)
                 dpi_trace("%d: cache%0d:%0d mshr-release id=%0d, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, 
@@ -234,7 +256,7 @@ module VX_miss_resrv #(
                     dpi_trace(" ");                    
                     if (ready_table[i]) 
                         dpi_trace("*");
-                    dpi_trace("%0d=%0h", i, `LINE_TO_BYTE_ADDR(addr_table[i], BANK_ID));
+                    dpi_trace("%0d=%0h, %0b", i, `LINE_TO_BYTE_ADDR(addr_table[i], BANK_ID), prefetch_table[i]);
                 end
             end
             dpi_trace("\n");
