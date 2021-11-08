@@ -329,6 +329,36 @@ module VX_bank #(
 
     wire [NUM_PORTS-1:0][`WORD_WIDTH-1:0] creq_data_st1 = wdata_st1[0 +: NUM_PORTS * `WORD_WIDTH];
     `UNUSED_VAR (wdata_st1)
+
+    //Assignment 6
+    wire is_used_st1;
+
+    VX_metadata_access #(
+        .BANK_ID          (BANK_ID),
+        .CACHE_ID         (CACHE_ID),
+        .CACHE_SIZE       (CACHE_SIZE),
+        .CACHE_LINE_SIZE  (CACHE_LINE_SIZE),
+        .NUM_BANKS        (NUM_BANKS),
+        .WORD_SIZE        (WORD_SIZE),   
+        .BANK_ADDR_OFFSET (BANK_ADDR_OFFSET)
+    ) metadata_access (
+
+        .clk        (clk),
+        .reset      (reset),
+
+    `ifdef DBG_CACHE_REQ_INFO
+        .debug_pc   (debug_pc_st1),
+        .debug_wid  (debug_wid_st1),
+    `endif
+
+        .stall      (crsq_stall),
+
+        .addr       (addr_st1),
+        .fill       (do_fill_st1),
+        .rw         ((do_read_st1 || do_mshr_st1) || (do_write_st1 && !miss_st1)),
+        .prefetch   (is_prefetch_st1),
+        .read_used  (is_used_st1)
+    );
     
     VX_data_access #(
         .BANK_ID        (BANK_ID),
@@ -360,38 +390,6 @@ module VX_bank #(
         .write_data (creq_data_st1),
         .read_data  (rdata_st1)
     );
-
-    //Assignment 6
-    wire is_used_st1;
-
-    VX_metadata_access #(
-        .BANK_ID          (BANK_ID),
-        .CACHE_ID         (CACHE_ID),
-        .CACHE_SIZE       (CACHE_SIZE),
-        .CACHE_LINE_SIZE  (CACHE_LINE_SIZE),
-        .NUM_BANKS        (NUM_BANKS),
-        .WORD_SIZE        (WORD_SIZE),   
-        .BANK_ADDR_OFFSET (BANK_ADDR_OFFSET)
-    ) metadata_access (
-
-        .clk        (clk),
-        .reset      (reset),
-
-    `ifdef DBG_CACHE_REQ_INFO
-        .debug_pc   (debug_pc_st1),
-        .debug_wid  (debug_wid_st1),
-    `endif
-
-        .stall      (crsq_stall),
-
-        .addr       (addr_st1),
-        .fill       (do_fill_st1),
-        .rw         ((do_read_st1 || do_mshr_st1) || (do_write_st1 && !miss_st1)),
-        .prefetch   (is_prefetch_st1),
-        .read_used  (is_used_st1)
-    );
-
-
 
     wire mshr_allocate = do_read_st0 && !crsq_stall;
     wire mshr_replay   = do_fill_st0 && !crsq_stall;
@@ -446,7 +444,7 @@ module VX_bank #(
         .lookup_id          (mshr_alloc_id),
         .lookup_addr        (addr_st0),
         .lookup_match       (mshr_pending_st0),
-        .lookup_prefetch_match (mshr_late_prefetch_st0),
+        .lookup_late_prefetch (mshr_late_prefetch_st0),
 
         // fill
         .fill_valid         (mem_rsp_fire),
@@ -565,10 +563,11 @@ module VX_bank #(
     assign perf_pipe_stalls  = crsq_stall || mreq_alm_full || mshr_alm_full;
     assign perf_mshr_stalls  = mshr_alm_full;
     // Assignment 6
-    assign perf_prefetch_requests = (creq_fire) && (&creq_byteen) ? creq_prefetch : 1'b0;
+    assign perf_prefetch_requests = (creq_fire) && (&creq_byteen) ? creq_prefetch : 1'b0;  
     assign perf_prefetched_blocks = mreq_push && is_prefetch_st1;
-    assign perf_unused_prefetched_blocks = is_fill_st1 && is_prefetched_block_st1 && !is_used_st1;
-    assign perf_late_prefetches = mshr_fire && mshr_late_prefetch_st1;
+    // assign perf_unused_prefetched_blocks = is_fill_st1 && is_prefetched_block_st1 && !is_used_st1;
+    assign perf_unused_prefetched_blocks = mshr_lookup && mshr_late_prefetch_st0;
+    assign perf_late_prefetches = 1'b0;
 `endif
 
     // Assignment 6

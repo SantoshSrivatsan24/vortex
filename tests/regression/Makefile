@@ -11,6 +11,8 @@ all:
 	$(MAKE) -C no_mf_ext
 	$(MAKE) -C no_smem
 	$(MAKE) -C prefetch
+	$(MAKE) -C unused_late_prefetch
+
 
 run-simx:
 	$(MAKE) -C basic run-simx
@@ -25,6 +27,8 @@ run-simx:
 	$(MAKE) -C no_mf_ext run-simx
 	$(MAKE) -C no_smem run-simx
 	$(MAKE) -C prefetch run-simx
+	$(MAKE) -C unused_late_prefetch run-simx
+
 
 run-rtlsim:
 	$(MAKE) -C basic run-rtlsim
@@ -39,6 +43,7 @@ run-rtlsim:
 	$(MAKE) -C no_mf_ext run-rtlsim
 	$(MAKE) -C no_smem run-rtlsim
 	$(MAKE) -C prefetch run-rtlsim
+	$(MAKE) -C unused_late_prefetch run-rtlsim
 
 run-vlsim:
 	$(MAKE) -C basic run-vlsim
@@ -53,6 +58,8 @@ run-vlsim:
 	$(MAKE) -C no_mf_ext run-vlsim
 	$(MAKE) -C no_smem run-vlsim
 	$(MAKE) -C prefetch run-vlsim
+	$(MAKE) -C unused_late_prefetch run-vlsim
+
 
 clean:
 	$(MAKE) -C basic clean
@@ -67,6 +74,8 @@ clean:
 	$(MAKE) -C no_mf_ext clean
 	$(MAKE) -C no_smem clean
 	$(MAKE) -C prefetch clean
+	$(MAKE) -C unused_late_prefetch clean
+
 
 clean-all:
 	$(MAKE) -C basic clean-all
@@ -81,4 +90,6 @@ clean-all:
 	$(MAKE) -C no_mf_ext clean-all
 	$(MAKE) -C no_smem clean-all
 	$(MAKE) -C prefetch clean-all
+	$(MAKE) -C unused_late_prefetch clean-all
+
 

@@ -55,7 +55,7 @@ module VX_miss_resrv #(
     input wire [`LINE_ADDR_WIDTH-1:0]   lookup_addr,
     output wire                         lookup_match,
     // Assignment 6
-    output wire                         lookup_prefetch_match,
+    output wire                         lookup_late_prefetch,
     
     // dequeue    
     output wire                         dequeue_valid,
@@ -87,8 +87,6 @@ module VX_miss_resrv #(
     reg [MSHR_SIZE-1:0] ready_table_x;
 
     wire [MSHR_SIZE-1:0] addr_matches;
-    // Assignment 6
-    wire [MSHR_SIZE-1:0] prefetch_matches;
     
     wire allocate_fire = allocate_valid && allocate_ready;
     
@@ -99,9 +97,19 @@ module VX_miss_resrv #(
 
     for (genvar i = 0; i < MSHR_SIZE; ++i) begin
         assign addr_matches[i] = (addr_table[i] == lookup_addr);
-        // Assignment 6
-        assign prefetch_matches[i] = prefetch_table[i] && addr_matches[i];
     end
+
+    // Assignment 6
+    reg late_prefetch_r = 1'b0;
+    always @(*) begin
+        for (int i = 0 ; i < MSHR_SIZE ; ++i) begin
+            if(addr_matches[i]) begin
+                late_prefetch_r = valid_table[i] && prefetch_table[i];
+                break;
+            end
+        end
+    end
+    assign lookup_late_prefetch = late_prefetch_r;
     
     always @(*) begin
         valid_table_x = valid_table;
@@ -224,8 +232,6 @@ module VX_miss_resrv #(
         assign lookup_entries[i] = (i != lookup_id);
     end
     assign lookup_match = |(lookup_entries & valid_table & addr_matches);
-    // Assignment 6
-    assign lookup_prefetch_match = |(lookup_entries & valid_table & prefetch_matches);
 
     `UNUSED_VAR (lookup_valid)
 
@@ -245,8 +251,8 @@ module VX_miss_resrv #(
                 dpi_trace("%d: cache%0d:%0d mshr-replay: addr=%0h, id=%0d\n", $time, CACHE_ID, BANK_ID,
                     `LINE_TO_BYTE_ADDR(lookup_addr, BANK_ID), lookup_id);
             if (lookup_valid)
-                dpi_trace("%d: cache%0d:%0d mshr-lookup: addr=%0h, id=%0d, match=%b, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID,
-                    `LINE_TO_BYTE_ADDR(lookup_addr, BANK_ID), lookup_id, lookup_match, lkp_debug_wid, lkp_debug_pc);
+                dpi_trace("%d: cache%0d:%0d mshr-lookup: addr=%0h, id=%0d, match=%b, late_prefetch=%0b, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID,
+                    `LINE_TO_BYTE_ADDR(lookup_addr, BANK_ID), lookup_id, lookup_match, lookup_late_prefetch, lkp_debug_wid, lkp_debug_pc);
             if (release_valid)
                 dpi_trace("%d: cache%0d:%0d mshr-release id=%0d, wid=%0d, PC=%0h\n", $time, CACHE_ID, BANK_ID, 
                     release_id, rel_debug_wid, rel_debug_pc);
@@ -256,7 +262,7 @@ module VX_miss_resrv #(
                     dpi_trace(" ");                    
                     if (ready_table[i]) 
                         dpi_trace("*");
-                    dpi_trace("%0d=%0h, %0b", i, `LINE_TO_BYTE_ADDR(addr_table[i], BANK_ID), prefetch_table[i]);
+                    dpi_trace("%0d=%0h : %0b | ", i, `LINE_TO_BYTE_ADDR(addr_table[i], BANK_ID), prefetch_table[i]);
                 end
             end
             dpi_trace("\n");
