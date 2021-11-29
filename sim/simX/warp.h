@@ -11,7 +11,7 @@ class Core;
 class Instr;
 class Pipeline;
 struct DomStackEntry {
-  DomStackEntry(const ThreadMask &tmask, Word PC) 
+  DomStackEntry(const ThreadMask &tmask, Word64 PC)
     : tmask(tmask)
     , PC(PC)
     , fallThrough(false)
@@ -26,11 +26,11 @@ struct DomStackEntry {
   {}
 
   ThreadMask tmask;
-  Word PC;
+  Word64 PC;
   bool fallThrough;
   bool unanimous;
 };
-
+// TODO KA: again unused code
 struct vtype {
   int vill;
   int vediv;
@@ -38,9 +38,10 @@ struct vtype {
   int vlmul;
 };
 
+/// TODO KA: What do Wrap means?
 class Warp {
 public:
-  Warp(Core *core, Word id);
+  Warp(Core *core, Word32 id);
 
   void clear();
   
@@ -58,15 +59,15 @@ public:
     return 0;
   }
 
-  Word id() const {
+  Word32 id() const {
     return id_;
   }
 
-  Word getPC() const {
+  Word64 getPC() const {
     return PC_;
   }
 
-  void setPC(Word PC) {
+  void setPC(Word64 PC) {
     PC_ = PC;
   }
 
@@ -75,13 +76,13 @@ public:
     active_ = tmask_.any();
   }
 
-  Word getTmask() const {
+  Word64 getTmask() const {
     if (active_)
       return tmask_.to_ulong();
     return 0;
   }
 
-  Word getIRegValue(int reg) const {
+  Word64 getIRegValue(int reg) const {
     return iRegFile_[0][reg];
   }
 
@@ -91,16 +92,16 @@ private:
 
   void execute(const Instr &instr, Pipeline *);
   
-  Word id_;
+  Word32 id_;
   bool active_;
   Core *core_;
   
-  Word PC_;
+  Word64 PC_;
   ThreadMask tmask_;  
   
   // simx64
-  std::vector<std::vector<Word>> iRegFile_;
-  std::vector<std::vector<Word>> fRegFile_;
+  std::vector<std::vector<Word64>> iRegFile_;
+  std::vector<std::vector<Word64>> fRegFile_;
   std::vector<std::vector<Byte>> vRegFile_;
   std::stack<DomStackEntry> domStack_;
 

@@ -16,7 +16,7 @@
 using namespace vortex;
 
 static bool HasDivergentThreads(const ThreadMask &thread_mask,                                
-                                const std::vector<std::vector<Word>> &reg_file,
+                                const std::vector<std::vector<Word32>> &reg_file,
                                 unsigned reg) {
   bool cond;
   size_t thread_idx = 0;
@@ -52,19 +52,19 @@ inline void update_fcrs(uint32_t fflags, Core* core, uint32_t tid, uint32_t wid)
 void Warp::execute(const Instr &instr, Pipeline *pipeline) {
   assert(tmask_.any());
 
-  Word nextPC = PC_ + core_->arch().wsize();
+  Word32 nextPC = PC_ + core_->arch().wsize();
   bool runOnce = false;
   
-  Word func3 = instr.getFunc3();
-  Word func6 = instr.getFunc6();
-  Word func7 = instr.getFunc7();
+  Word32 func3 = instr.getFunc3();
+  Word32 func6 = instr.getFunc6();
+  Word32 func7 = instr.getFunc7();
 
   auto opcode = instr.getOpcode();
   int rdest  = instr.getRDest();
   int rsrc0  = instr.getRSrc(0);
   int rsrc1  = instr.getRSrc(1);
-  Word immsrc= instr.getImm();
-  Word vmask = instr.getVmask();
+  Word32 immsrc= instr.getImm();
+  Word32 vmask = instr.getVmask();
 
   int num_threads = core_->arch().num_threads();
   for (int t = 0; t < num_threads; t++) {
@@ -74,8 +74,8 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
     auto &iregs = iRegFile_.at(t);
     auto &fregs = fRegFile_.at(t);
 
-    Word rsdata[3];
-    Word rddata;
+    Word32 rsdata[3];
+    Word32 rddata;
 
     int num_rsrcs = instr.getNRSrc();
     if (num_rsrcs) {    
@@ -162,8 +162,8 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
         } break;
         case 5: {
           // DIVU
-          Word dividen = rsdata[0];
-          Word divisor = rsdata[1];
+          Word32 dividen = rsdata[0];
+          Word32 divisor = rsdata[1];
           if (divisor == 0) {
             rddata = -1;
           } else {
@@ -184,8 +184,8 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
         } break;
         case 7: {
           // REMU
-          Word dividen = rsdata[0];
-          Word divisor = rsdata[1];
+          Word32 dividen = rsdata[0];
+          Word32 divisor = rsdata[1];
           if (rsdata[1] == 0) {
             rddata = dividen;
           } else {
@@ -219,7 +219,7 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
           break;
         case 3:
           // RV32I: SLTU (unsigned)
-          rddata = (Word(rsdata[0]) < Word(rsdata[1]));
+          rddata = (Word32(rsdata[0]) < Word32(rsdata[1]));
           break;
         case 4:
           // RV32I: XOR
@@ -231,7 +231,7 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
             rddata = WordI(rsdata[0]) >> WordI(rsdata[1]);
           } else {
             // RV32I: SRL
-            rddata = Word(rsdata[0]) >> Word(rsdata[1]);
+            rddata = Word32(rsdata[0]) >> Word32(rsdata[1]);
           }
           break;
         case 6:
@@ -264,7 +264,7 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
         break;
       case 3: {
         // RV32I: SLTIU
-        rddata = (Word(rsdata[0]) < Word(immsrc));
+        rddata = (Word32(rsdata[0]) < Word32(immsrc));
       } break;
       case 4:
         // RV32I: XORI
@@ -273,11 +273,11 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
       case 5:
         if (func7) {
           // RV64I: SRAI
-          Word result = WordI(rsdata[0]) >> immsrc;
+          Word32 result = WordI(rsdata[0]) >> immsrc;
           rddata = result;
         } else {
           // RV64I: SRLI
-          Word result = Word(rsdata[0]) >> immsrc;
+          Word32 result = Word32(rsdata[0]) >> immsrc;
           rddata = result;
         }
         break;
@@ -322,13 +322,13 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
         break;
       case 6:
         // RV32I: BLTU
-        if (Word(rsdata[0]) < Word(rsdata[1])) {
+        if (Word32(rsdata[0]) < Word32(rsdata[1])) {
           nextPC = PC_ + immsrc;
         }
         break;
       case 7:
         // RV32I: BGEU
-        if (Word(rsdata[0]) >= Word(rsdata[1])) {
+        if (Word32(rsdata[0]) >= Word32(rsdata[1])) {
           nextPC = PC_ + immsrc;
         }
         break;
@@ -353,9 +353,9 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
       rd_write = true;
       break;
     case L_INST: {
-      Word memAddr   = ((rsdata[0] + immsrc) & 0xFFFFFFFC); // word aligned
-      Word shift_by  = ((rsdata[0] + immsrc) & 0x00000003) * 8;
-      Word data_read = core_->dcache_read(memAddr, 8);
+      Word32 memAddr   = ((rsdata[0] + immsrc) & 0xFFFFFFFC); // word aligned
+      Word32 shift_by  = ((rsdata[0] + immsrc) & 0x00000003) * 8;
+      Word32 data_read = core_->dcache_read(memAddr, 8);
       D(3, "LOAD MEM: ADDRESS=0x" << std::hex << memAddr << ", DATA=0x" << data_read);
       switch (func3) {
       case 0:
@@ -376,15 +376,15 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
         break;
       case 4:
         // RV32I: LBU
-        rddata = Word((data_read >> shift_by) & 0xFF);
+        rddata = Word32((data_read >> shift_by) & 0xFF);
         break;
       case 5:
         // RV32I: LHU
-        rddata = Word((data_read >> shift_by) & 0xFFFF);
+        rddata = Word32((data_read >> shift_by) & 0xFFFF);
         break;
       case 6:
         // RV64I: LWU
-        rddata = Word((data_read >> shift_by) & 0xFFFFFFFF);
+        rddata = Word32((data_read >> shift_by) & 0xFFFFFFFF);
         break;
       default:
         std::abort();        
@@ -392,7 +392,7 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
       rd_write = true;
     } break;
     case S_INST: {
-      Word memAddr = rsdata[0] + immsrc;
+      Word32 memAddr = rsdata[0] + immsrc;
       D(3, "STORE MEM: ADDRESS=0x" << std::hex << memAddr);
       switch (func3) {
       case 0:
@@ -468,13 +468,13 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
             // RV64I: SRAI
             // rs1 shifted by lower 5 bits of imm
             // Illegal exception if imm[5] != 0
-            Word result = signExt((HalfWordI)rsdata[0] >> (HalfWordI)immsrc, 32, 0xFFFFFFFF);
+            Word32 result = signExt((HalfWordI)rsdata[0] >> (HalfWordI)immsrc, 32, 0xFFFFFFFF);
             rddata = result;
           } else {
             // RV64I: SRLI
             // rs1 shifted by lower 5 bits of imm
             // Illegal exception if imm[5] != 0
-            Word result = signExt((HalfWord)rsdata[0] >> (HalfWord)immsrc, 32, 0xFFFFFFFF);
+            Word32 result = signExt((HalfWord)rsdata[0] >> (HalfWord)immsrc, 32, 0xFFFFFFFF);
             rddata = result;
           }
           break;
@@ -484,8 +484,8 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
       rd_write = true;
     } break;
     case SYS_INST: {
-      Word csr_addr = immsrc & 0x00000FFF;
-      Word csr_value = core_->get_csr(csr_addr, t, id_);
+      Word32 csr_addr = immsrc & 0x00000FFF;
+      Word32 csr_value = core_->get_csr(csr_addr, t, id_);
       switch (func3) {
       case 0:
         if (csr_addr < 2) {
@@ -540,8 +540,8 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
       break;
     case (FL | VL):
       if (func3 == 0x2) {
-        Word memAddr = rsdata[0] + immsrc;
-        Word data_read = core_->dcache_read(memAddr, 4);        
+        Word32 memAddr = rsdata[0] + immsrc;
+        Word32 data_read = core_->dcache_read(memAddr, 4);
         D(3, "LOAD MEM: ADDRESS=0x" << std::hex << memAddr << ", DATA=0x" << data_read);
         rddata = data_read;
       } else {  
@@ -557,9 +557,9 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
         case 6: { 
           //load word and unit strided (not checking for unit stride)
           for (int i = 0; i < vl_; i++) {
-            Word memAddr = ((rsdata[0]) & 0xFFFFFFFC) + (i * vtype_.vsew / 8);
+            Word32 memAddr = ((rsdata[0]) & 0xFFFFFFFC) + (i * vtype_.vsew / 8);
             D(3, "STORE MEM: ADDRESS=0x" << std::hex << memAddr);
-            Word data_read = core_->dcache_read(memAddr, 4);
+            Word32 data_read = core_->dcache_read(memAddr, 4);
             D(3, "Mem addr: " << std::hex << memAddr << " Data read " << data_read);
             int *result_ptr = (int *)(vd.data() + i);
             *result_ptr = data_read;            
@@ -574,16 +574,16 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
       break;
     case (FS | VS):
       if (func3 == 0x2) {
-        Word memAddr = rsdata[0] + immsrc;
+        Word32 memAddr = rsdata[0] + immsrc;
         core_->dcache_write(memAddr, rsdata[1], 4);
         D(3, "STORE MEM: ADDRESS=0x" << std::hex << memAddr);
       } else {
         for (int i = 0; i < vl_; i++) {
-          Word memAddr = rsdata[0] + (i * vtype_.vsew / 8);
+          Word32 memAddr = rsdata[0] + (i * vtype_.vsew / 8);
           D(3, "STORE MEM: ADDRESS=0x" << std::hex << memAddr);
           switch (instr.getVlsWidth()) {
           case 6: {
-            //store word and unit strided (not checking for unit stride)          
+            //store word and unit strided (not checking for unit stride)
             uint32_t value = *(uint32_t *)(vRegFile_[instr.getVs3()].data() + i);
             core_->dcache_write(memAddr, value, 4);
             D(3, "store: " << memAddr << " value:" << value);
@@ -691,7 +691,7 @@ void Warp::execute(const Instr &instr, Pipeline *pipeline) {
     case FMNMSUB: {
       // int frm = get_fpu_rm(func3, core_, t, id_);
       // simx64
-      Word fflags = 0;
+      Word32 fflags = 0;
       switch (opcode) {
       case FMADD:
         // rddata = rv_fmadd(rsdata[0], rsdata[1], rsdata[2], frm, &fflags);

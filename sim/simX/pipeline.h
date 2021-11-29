@@ -19,7 +19,7 @@ public:
   bool enter(Pipeline* drain);
 
   void next(Pipeline* drain);
-
+  ///TODO KA: what do '--' comment mean?
   //--
   bool      valid;
 
@@ -29,7 +29,7 @@ public:
 
   //--    
   int       wid;
-  Word      PC;
+  Word64      PC;
 
   //--
   int       rdest_type;

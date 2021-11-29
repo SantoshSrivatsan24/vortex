@@ -13,6 +13,9 @@
 
 using namespace vortex;
 
+/// TODO KA: Discuss: Cover all code with documentation.
+/// Now there are a lot of complicated terms and fields names.
+/// To change constant I need to spend a lot of time(.
 int main(int argc, char **argv) {
 
   std::string archString("rv32imf");

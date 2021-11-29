@@ -73,39 +73,40 @@ public:
   void setSrcFReg(int srcReg) { rsrc_type_[num_rsrcs_] = 2; rsrc_[num_rsrcs_++] = srcReg;  }
   void setDestVReg(int destReg) { rdest_type_ = 3; rdest_ = destReg; }
   void setSrcVReg(int srcReg) { rsrc_type_[num_rsrcs_] = 3; rsrc_[num_rsrcs_++] = srcReg;  }
-  void setFunc3(Word func3) { func3_ = func3; }
-  void setFunc7(Word func7) { func7_ = func7; }
-  void setImm(Word imm) { has_imm_ = true; imm_ = imm; }
-  void setVlsWidth(Word width) { vlsWidth_ = width; }
-  void setVmop(Word mop) { vMop_ = mop; }
-  void setVnf(Word nf) { vNf_ = nf; }
-  void setVmask(Word mask) { vmask_ = mask; }
-  void setVs3(Word vs) { vs3_ = vs; }
-  void setVlmul(Word lmul) { vlmul_ = 1 << lmul; }
-  void setVsew(Word sew) { vsew_ = 1 << (3+sew); }
-  void setVediv(Word ediv) { vediv_ = 1 << ediv; }
-  void setFunc6(Word func6) { func6_ = func6; }
+  void setFunc3(Word32 func3) { func3_ = func3; }
+  void setFunc7(Word32 func7) { func7_ = func7; }
+  void setImm(Word32 imm) { has_imm_ = true; imm_ = imm; }
+  void setVlsWidth(Word32 width) { vlsWidth_ = width; }
+  void setVmop(Word32 mop) { vMop_ = mop; }
+  void setVnf(Word32 nf) { vNf_ = nf; }
+  void setVmask(Word32 mask) { vmask_ = mask; }
+  void setVs3(Word32 vs) { vs3_ = vs; }
+  void setVlmul(Word32 lmul) { vlmul_ = 1 << lmul; }
+  void setVsew(Word32 sew) { vsew_ = 1 << (3+sew); }
+  void setVediv(Word32 ediv) { vediv_ = 1 << ediv; }
+  void setFunc6(Word32 func6) { func6_ = func6; }
 
   /* Getters used by encoders. */
+  //TODO KA: To discuss. Is it necessary to use Word32 as return value? Maybe uint32_t matches best?
   Opcode getOpcode() const { return opcode_; }
-  Word getFunc3() const { return func3_; }
-  Word getFunc6() const { return func6_; }
-  Word getFunc7() const { return func7_; }
+  Word32 getFunc3() const { return func3_; }
+  Word32 getFunc6() const { return func6_; }
+  Word32 getFunc7() const { return func7_; }
   int getNRSrc() const { return num_rsrcs_; }
   int getRSrc(int i) const { return rsrc_[i]; }
   int getRSType(int i) const { return rsrc_type_[i]; }
   int getRDest() const { return rdest_; }  
   int getRDType() const { return rdest_type_; }  
   bool hasImm() const { return has_imm_; }
-  Word getImm() const { return imm_; }
-  Word getVlsWidth() const { return vlsWidth_; }
-  Word getVmop() const { return vMop_; }
-  Word getvNf() const { return vNf_; }
-  Word getVmask() const { return vmask_; }
-  Word getVs3() const { return vs3_; }
-  Word getVlmul() const { return vlmul_; }
-  Word getVsew() const { return vsew_; }
-  Word getVediv() const { return vediv_; }
+  Word32 getImm() const { return imm_; }
+  Word32 getVlsWidth() const { return vlsWidth_; }
+  Word32 getVmop() const { return vMop_; }
+  Word32 getvNf() const { return vNf_; }
+  Word32 getVmask() const { return vmask_; }
+  Word32 getVs3() const { return vs3_; }
+  Word32 getVlmul() const { return vlmul_; }
+  Word32 getVsew() const { return vsew_; }
+  Word32 getVediv() const { return vediv_; }
 
 private:
 
@@ -113,6 +114,7 @@ private:
     MAX_REG_SOURCES = 3
   };
 
+  //TODO KA: There are unused fields: isrc_mask_, fsrc_mask_, vsrc_mask_
   Opcode opcode_;
   int num_rsrcs_;
   bool has_imm_;
@@ -120,23 +122,23 @@ private:
   int isrc_mask_;
   int fsrc_mask_;  
   int vsrc_mask_;
-  Word imm_;
+  Word32 imm_;
   int rsrc_type_[MAX_REG_SOURCES];
   int rsrc_[MAX_REG_SOURCES];  
   int rdest_;
-  Word func3_;
-  Word func7_;
+  Word32 func3_;
+  Word32 func7_;
 
   //Vector
-  Word vmask_;
-  Word vlsWidth_;
-  Word vMop_;
-  Word vNf_;
-  Word vs3_;
-  Word vlmul_;
-  Word vsew_;
-  Word vediv_;
-  Word func6_;
+  Word32 vmask_;
+  Word32 vlsWidth_;
+  Word32 vMop_;
+  Word32 vNf_;
+  Word32 vs3_;
+  Word32 vlmul_;
+  Word32 vsew_;
+  Word32 vediv_;
+  Word32 func6_;
 
   friend std::ostream &operator<<(std::ostream &, const Instr&);
 };

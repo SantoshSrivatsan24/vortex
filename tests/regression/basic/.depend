@@ -1,0 +1,2 @@
+main.o: main.cpp /Users/kirill/vortex/driver/include/vortex.h common.h \
+  kernel_scheduler.h

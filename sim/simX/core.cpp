@@ -12,7 +12,7 @@
 
 using namespace vortex;
 
-Core::Core(const ArchDef &arch, Decoder &decoder, MemoryUnit &mem, Word id)
+Core::Core(const ArchDef &arch, Decoder &decoder, MemoryUnit &mem, Word32 id)
     : id_(id)
     , arch_(arch)
     , decoder_(decoder)
@@ -241,7 +241,7 @@ void Core::writeback() {
   inst_in_writeback_.next(NULL);
 }
 
-Word Core::get_csr(Addr addr, int tid, int wid) {
+Word32 Core::get_csr(Addr64 addr, int tid, int wid) {
   if (addr == CSR_FFLAGS) {
     return fcsrs_.at(wid) & 0x1F;
   } else if (addr == CSR_FRM) {
@@ -284,19 +284,19 @@ Word Core::get_csr(Addr addr, int tid, int wid) {
     return insts_;
   } else if (addr == CSR_MINSTRET_H) {
     // NumInsts
-    return (Word)(insts_ >> 32);
+    return (Word32)(insts_ >> 32);
   } else if (addr == CSR_MCYCLE) {
     // NumCycles
-    return (Word)steps_;
+    return (Word32)steps_;
   } else if (addr == CSR_MCYCLE_H) {
     // NumCycles
-    return (Word)(steps_ >> 32);
+    return (Word32)(steps_ >> 32);
   } else {
     return csrs_.at(addr);
   }
 }
 
-void Core::set_csr(Addr addr, Word value, int /*tid*/, int wid) {
+void Core::set_csr(Addr64 addr, Word32 value, int /*tid*/, int wid) {
   if (addr == CSR_FFLAGS) {
     fcsrs_.at(wid) = (fcsrs_.at(wid) & ~0x1F) | (value & 0x1F);
   } else if (addr == CSR_FRM) {
@@ -322,16 +322,17 @@ void Core::barrier(int bar_id, int count, int warp_id) {
 }
 
 // simx64
-Word Core::icache_fetch(Addr addr) {
-  Word data;
-  mem_.read(&data, addr, sizeof(Word), 0);
+// TODO KA: Is is righnt that cache is red from just simple memory
+Word32 Core::icache_fetch(Addr64 addr) {
+  Word32 data;
+  mem_.read(&data, addr, sizeof(Word32), 0);
   return data;
 }
 
 // simx64
-Word Core::dcache_read(Addr addr, Size size) {
+Word32 Core::dcache_read(Addr64 addr, Size size) {
   ++loads_;
-  Word data = 0;
+  Word32 data = 0;
 #ifdef SM_ENABLE
   if ((addr >= (SMEM_BASE_ADDR - SMEM_SIZE))
    && ((addr + 3) < SMEM_BASE_ADDR)) {
@@ -343,7 +344,7 @@ Word Core::dcache_read(Addr addr, Size size) {
   return data;
 }
 
-void Core::dcache_write(Addr addr, Word data, Size size) {
+void Core::dcache_write(Addr64 addr, Word32 data, Size size) {
   ++stores_;
 #ifdef SM_ENABLE
   if ((addr >= (SMEM_BASE_ADDR - SMEM_SIZE))
@@ -375,7 +376,7 @@ void Core::printStats() const {
             << "Stores: " << stores_ << std::endl;
 }
 
-void Core::writeToStdOut(Addr addr, Word data) {
+void Core::writeToStdOut(Addr64 addr, Word32 data) {
   uint32_t tid = (addr - IO_COUT_ADDR) & (IO_COUT_SIZE-1);
   auto& ss_buf = print_bufs_[tid];
   char c = (char)data;

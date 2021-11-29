@@ -133,6 +133,7 @@ MemoryUnit::TLBEntry MemoryUnit::tlbLookup(uint64_t vAddr, uint32_t flagMask) {
   }
 }
 
+// What all instruction
 void MemoryUnit::read(void *data, uint64_t addr, uint64_t size, bool sup) {
   uint64_t pAddr;
   if (disableVM_) {

@@ -10,12 +10,12 @@
 
 using namespace vortex;
 
-Warp::Warp(Core *core, Word id)
+Warp::Warp(Core *core, Word32 id)
     : id_(id)
     , core_(core) {
   // simx64
-  iRegFile_.resize(core_->arch().num_threads(), std::vector<Word>(core_->arch().num_regs(), 0));
-  fRegFile_.resize(core_->arch().num_threads(), std::vector<Word>(core_->arch().num_regs(), 0));
+  iRegFile_.resize(core_->arch().num_threads(), std::vector<Word64>(core_->arch().num_regs(), 0));
+  fRegFile_.resize(core_->arch().num_threads(), std::vector<Word64>(core_->arch().num_regs(), 0));
   vRegFile_.resize(core_->arch().num_regs(), std::vector<Byte>(core_->arch().vsize(), 0));
   this->clear();
 }
@@ -36,7 +36,7 @@ void Warp::step(Pipeline *pipeline) {
 
   /* Fetch and decode. */    
 
-  Word fetched = core_->icache_fetch(PC_);
+  Word32 fetched = core_->icache_fetch(PC_);
   auto instr = core_->decoder().decode(fetched, PC_);
 
   // Update pipeline
