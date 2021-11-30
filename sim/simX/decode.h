@@ -16,7 +16,7 @@ public:
   std::shared_ptr<Instr> decode(uint32_t code, uint64_t PC);
 
 private:
-
+//TODO KA: change types
   Word32 inst_s_;
   Word32 opcode_s_;
   Word32 reg_s_;

@@ -15,9 +15,12 @@ public:
           int num_cores, 
           int num_warps, 
           int num_threads) {  
-    // simx64               
+    // simx64
+    //Word size
     wsize_       = 8;
+    //
     vsize_       = 16;
+
     num_regs_    = 32;
     num_csrs_    = 4096;
     num_barriers_= NUM_BARRIERS;

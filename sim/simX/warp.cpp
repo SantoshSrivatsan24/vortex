@@ -34,7 +34,7 @@ void Warp::step(Pipeline *pipeline) {
     DPN(2, tmask_[n-i-1]);
   DPN(2, "\n");
 
-  /* Fetch and decode. */    
+  /* Fetch and decode. */
 
   Word32 fetched = core_->icache_fetch(PC_);
   auto instr = core_->decoder().decode(fetched, PC_);
