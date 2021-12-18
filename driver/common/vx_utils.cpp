@@ -136,6 +136,7 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
   uint64_t mem_reads = 0;
   uint64_t mem_writes = 0;
   uint64_t mem_lat = 0;
+  uint64_t active_threads = 0;
 #ifdef EXT_TEX_ENABLE
   // PERF: texunit
   uint64_t tex_mem_reads = 0;
@@ -280,6 +281,11 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
     mem_writes += mem_writes_per_core;
     mem_lat    += mem_lat_per_core;    
   
+    uint64_t active_threads_per_core = get_csr_64(staging_ptr, CSR_MPM_ACTIVE_THREADS);
+    if (num_cores > 1) fprintf(stream, "PERF: core%d: active threads=%ld\n", core_id, active_threads_per_core);
+    active_threads += active_threads_per_core;
+
+
   #ifdef EXT_TEX_ENABLE
     // total reads
     uint64_t tex_reads_per_core = get_csr_64(staging_ptr, CSR_MPM_TEX_READS);
@@ -312,6 +318,7 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
   fprintf(stream, "PERF: csr unit stalls=%ld\n", csr_stalls);
   fprintf(stream, "PERF: fpu unit stalls=%ld\n", fpu_stalls);
   fprintf(stream, "PERF: gpu unit stalls=%ld\n", gpu_stalls);
+  fprintf(stream, "PERF: active threads=%ld\n", active_threads);
   fprintf(stream, "PERF: loads=%ld\n", loads);
   fprintf(stream, "PERF: stores=%ld\n", stores);
   fprintf(stream, "PERF: branches=%ld\n", branches);
@@ -328,6 +335,7 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
   fprintf(stream, "PERF: smem bank stalls=%ld (utilization=%d%%)\n", smem_bank_stalls, smem_bank_utilization);
   fprintf(stream, "PERF: memory requests=%ld (reads=%ld, writes=%ld)\n", (mem_reads + mem_writes), mem_reads, mem_writes);
   fprintf(stream, "PERF: memory average latency=%d cycles\n", mem_avg_lat);
+  
 #ifdef EXT_TEX_ENABLE
   int tex_avg_lat = (int)(double(tex_mem_lat) / double(tex_mem_reads));
   fprintf(stream, "PERF: tex memory reads=%ld\n", tex_mem_reads);
