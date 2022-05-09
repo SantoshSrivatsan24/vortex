@@ -12,6 +12,10 @@ module VX_lsu_unit #(
     VX_dcache_req_if.master dcache_req_if,
     VX_dcache_rsp_if.slave  dcache_rsp_if,
 
+`ifdef PERF_ENABLE
+    VX_perf_memsys_if.master perf_memsys_if,
+`endif
+
     // inputs
     VX_lsu_req_if.slave     lsu_req_if,
 
@@ -57,6 +61,25 @@ module VX_lsu_unit #(
     end    
 
     wire lsu_is_dup = lsu_req_if.tmask[0] && (& addr_matches);
+
+`ifdef PERF_ENABLE
+
+    reg [`PERF_CTR_BITS-1:0] dup_reqs;
+
+    always @(posedge clk) begin
+
+        if (reset) begin
+            dup_reqs <= 0;
+        end else begin
+            if (| dcache_req_fire) begin
+                dup_reqs <= dup_reqs + `PERF_CTR_BITS'(lsu_is_dup);
+            end
+        end
+    end
+
+    assign perf_memsys_if.dup_reqs = dup_reqs;
+
+`endif
 
     for (genvar i = 0; i < `NUM_THREADS; i++) begin
         // is non-cacheable address

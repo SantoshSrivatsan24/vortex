@@ -158,6 +158,9 @@ module VX_execute #(
         .dcache_req_if  (dcache_req_if),
         .dcache_rsp_if  (dcache_rsp_if),
     `endif
+    `ifdef PERF_ENABLE
+        .perf_memsys_if (perf_memsys_if),
+    `endif
         .lsu_req_if     (lsu_req_if),
         .ld_commit_if   (ld_commit_if),
         .st_commit_if   (st_commit_if)

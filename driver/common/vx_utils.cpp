@@ -136,6 +136,7 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
   uint64_t mem_reads = 0;
   uint64_t mem_writes = 0;
   uint64_t mem_lat = 0;
+  uint64_t dup_reqs = 0;
 #ifdef EXT_TEX_ENABLE
   // PERF: texunit
   uint64_t tex_mem_reads = 0;
@@ -272,13 +273,16 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
     // PERF: memory
     uint64_t mem_reads_per_core  = get_csr_64(staging_ptr, CSR_MPM_MEM_READS);
     uint64_t mem_writes_per_core = get_csr_64(staging_ptr, CSR_MPM_MEM_WRITES);
-    uint64_t mem_lat_per_core    = get_csr_64(staging_ptr, CSR_MPM_MEM_LAT);      
+    uint64_t mem_lat_per_core    = get_csr_64(staging_ptr, CSR_MPM_MEM_LAT);  
+    uint64_t dup_reqs_per_core   = get_csr_64(staging_ptr, CSR_MPM_DUP_REQS);  
     int mem_avg_lat = (int)(double(mem_lat_per_core) / double(mem_reads_per_core));       
     if (num_cores > 1) fprintf(stream, "PERF: core%d: memory requests=%ld (reads=%ld, writes=%ld)\n", core_id, (mem_reads_per_core + mem_writes_per_core), mem_reads_per_core, mem_writes_per_core);
     if (num_cores > 1) fprintf(stream, "PERF: core%d: memory latency=%d cycles\n", core_id, mem_avg_lat);
+    if (num_cores > 1) fprintf(stream, "PERF: core%d: duplicate memory requests=%ld cycles\n", core_id, dup_reqs_per_core);
     mem_reads  += mem_reads_per_core;
     mem_writes += mem_writes_per_core;
-    mem_lat    += mem_lat_per_core;    
+    mem_lat    += mem_lat_per_core;  
+    dup_reqs   += dup_reqs_per_core;
   
   #ifdef EXT_TEX_ENABLE
     // total reads
@@ -328,6 +332,7 @@ extern int vx_dump_perf(vx_device_h device, FILE* stream) {
   fprintf(stream, "PERF: smem bank stalls=%ld (utilization=%d%%)\n", smem_bank_stalls, smem_bank_utilization);
   fprintf(stream, "PERF: memory requests=%ld (reads=%ld, writes=%ld)\n", (mem_reads + mem_writes), mem_reads, mem_writes);
   fprintf(stream, "PERF: memory average latency=%d cycles\n", mem_avg_lat);
+  fprintf(stream, "PERF: duplicate memory requests=%d cycles\n", dup_reqs);
 #ifdef EXT_TEX_ENABLE
   int tex_avg_lat = (int)(double(tex_mem_lat) / double(tex_mem_reads));
   fprintf(stream, "PERF: tex memory reads=%ld\n", tex_mem_reads);
