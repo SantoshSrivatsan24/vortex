@@ -157,6 +157,10 @@ module VX_issue #(
     reg [`PERF_CTR_BITS-1:0] perf_csr_stalls;
     reg [`PERF_CTR_BITS-1:0] perf_gpu_stalls;
     reg [`PERF_CTR_BITS-1:0] perf_active_threads;
+    wire [`NUM_THREADS-1:0]  perf_active_threads_per_cycle = ibuffer_if.tmask;
+    wire [$clog2(`NUM_THREADS+1)-1:0] num_active_threads_per_cycle;
+    `POP_COUNT(num_active_threads_per_cycle, perf_active_threads_per_cycle);
+
 `ifdef EXT_F_ENABLE
     reg [`PERF_CTR_BITS-1:0] perf_fpu_stalls;
 `endif
@@ -175,9 +179,7 @@ module VX_issue #(
         `endif
         end else begin
             if (ibuffer_if.valid & ibuffer_if.ready) begin
-                for (integer i = 0; i < `NUM_THREADS; i = i + 1) begin
-                    perf_active_threads <= perf_active_threads + {{43{1'b0}}, ibuffer_if.tmask[i]};
-                end
+                perf_active_threads <= perf_active_threads + `PERF_CTR_BITS'(num_active_threads_per_cycle);
             end 
             if (decode_if.valid & ~decode_if.ready) begin
                 perf_ibf_stalls <= perf_ibf_stalls  + `PERF_CTR_BITS'd1;

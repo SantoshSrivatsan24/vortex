@@ -215,7 +215,7 @@
 `define CSR_MPM_TEX_READS_H         12'hB9B
 `define CSR_MPM_TEX_LAT             12'hB1C     // texture latency
 `define CSR_MPM_TEX_LAT_H           12'hB9C
-`define CSR_MPM_ACTIVE_THREADS      12'hb1D
+`define CSR_MPM_ACTIVE_THREADS      12'hB1D
 `define CSR_MPM_ACTIVE_THREADS_H    12'hB9D
 
 // Machine Information Registers
