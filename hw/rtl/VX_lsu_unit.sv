@@ -71,15 +71,6 @@ module VX_lsu_unit #(
         end
     end
 
-    // Hardware prefetching
-    wire is_prefetch;
-    wire [`NUM_THREADS-1:0][31:0] prefetch_addr;
-
-    assign is_prefetch = req_valid & ready_in & req_wb & ~req_is_prefetch;
-    for (genvar i = 0; i < `NUM_THREADS; ++i) begin
-        assign prefetch_addr[i] = req_addr[i] + 32'h4; 
-    end
-
     // fence stalls the pipeline until all pending requests are sent
     wire fence_wait = lsu_req_if.is_fence && (req_valid || !mbuf_empty);
     
@@ -89,6 +80,15 @@ module VX_lsu_unit #(
     wire lsu_valid = lsu_req_if.valid && ~fence_wait;
 
     wire lsu_wb = lsu_req_if.wb | lsu_req_if.is_prefetch;
+
+    // Hardware prefetching
+    wire is_prefetch;
+    wire [`NUM_THREADS-1:0][31:0] prefetch_addr;
+
+    assign is_prefetch = req_valid & ready_in & req_wb & ~req_is_prefetch;
+    for (genvar i = 0; i < `NUM_THREADS; ++i) begin
+        assign prefetch_addr[i] = req_addr[i] + 32'h4; 
+    end
 
     VX_pipe_register #(
         .DATAW  (1 + 1 + 1 + `UUID_BITS + `NW_BITS + `NUM_THREADS + 32 + (`NUM_THREADS * 32) + (`NUM_THREADS * `CACHE_ADDR_TYPE_BITS) + `INST_LSU_BITS + `NR_BITS + 1 + (`NUM_THREADS * 32)),
