@@ -71,6 +71,15 @@ module VX_lsu_unit #(
         end
     end
 
+    // Hardware prefetching
+    wire is_prefetch;
+    wire [`NUM_THREADS-1:0][31:0] prefetch_addr;
+
+    assign is_prefetch = req_valid & ready_in & req_wb & ~req_is_prefetch;
+    for (genvar i = 0; i < `NUM_THREADS; ++i) begin
+        assign prefetch_addr[i] = req_addr[i] + 32'h4; 
+    end
+
     // fence stalls the pipeline until all pending requests are sent
     wire fence_wait = lsu_req_if.is_fence && (req_valid || !mbuf_empty);
     
@@ -88,12 +97,24 @@ module VX_lsu_unit #(
         .clk      (clk),
         .reset    (reset),
         .enable   (!stall_in),
-        .data_in  ({lsu_valid, lsu_is_dup, lsu_req_if.is_prefetch, lsu_req_if.uuid, lsu_req_if.wid, lsu_req_if.tmask, lsu_req_if.PC, full_addr, lsu_addr_type, lsu_req_if.op_type, lsu_req_if.rd, lsu_wb, lsu_req_if.store_data}),
+        .data_in  ({lsu_valid | is_prefetch, 
+                    is_prefetch ? req_is_dup : lsu_is_dup, 
+                    lsu_req_if.is_prefetch | is_prefetch, 
+                    is_prefetch ? req_uuid  : lsu_req_if.uuid, 
+                    is_prefetch ? req_wid   : lsu_req_if.wid, 
+                    is_prefetch ? req_tmask : lsu_req_if.tmask, 
+                    is_prefetch ? req_pc    : lsu_req_if.PC, 
+                    is_prefetch ? prefetch_addr : full_addr, 
+                    is_prefetch ? req_addr_type : lsu_addr_type, 
+                    is_prefetch ? req_type  : lsu_req_if.op_type, 
+                    is_prefetch ? req_rd    : lsu_req_if.rd, 
+                    is_prefetch ? req_wb    : lsu_wb, 
+                    lsu_req_if.store_data}),
         .data_out ({req_valid, req_is_dup, req_is_prefetch,        req_uuid,        req_wid,        req_tmask,        req_pc,        req_addr,  req_addr_type, req_type,           req_rd,        req_wb, req_data})
     );
 
     // Can accept new request?
-    assign lsu_req_if.ready = ~stall_in && ~fence_wait;
+    assign lsu_req_if.ready = ~stall_in && ~fence_wait & ~is_prefetch;
 
     wire [`UUID_BITS-1:0] rsp_uuid;
     wire [`NW_BITS-1:0] rsp_wid;
